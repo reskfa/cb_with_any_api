@@ -16,8 +16,8 @@ A股可转债研究者面临一个现实问题：**数据源要么贵，要么�
 |--------|------|------|
 | **Wind** | ✅ 完成 | 全字段支持，需要 Wind 终端 |
 | **Tushare** | ✅ 完成 | 10 个核心字段全部对接，YTM/Ptm/ImpliedVol 自行计算 |
+| **akshare** | ✅ 本月 | 免费开源数据源 |
 | **jqdata** | 🚧 本月 | 聚宽数据 |
-| **akshare** | 🚧 本月 | 免费开源数据源 |
 
 ## 核心数据结构
 
@@ -55,8 +55,8 @@ obj.matNormal         # 过滤异常券后的有效矩阵
 **1. 安装依赖**
 
 ```bash
-pip install pandas numpy scipy tushare
-# 可选: WindPy (需 Wind 终端), jqdatasdk, akshare
+pip install pandas numpy scipy tushare akshare
+# 可选: WindPy (需 Wind 终端), jqdatasdk
 ```
 
 **2. 配置 API 凭证**
@@ -95,7 +95,7 @@ const.py              # API 凭证配置（不要提交到 git）
 参数.xlsx              # 字段映射表（Wind/Tushare/同花顺 字段对照）
 ```
 
-## Tushare 字段对接细节
+### Tushare 字段对接细节
 
 直接从 `cb_daily` 获取的：Amt, Close, ConvV, ConvPrem, Strb, StrbPrem
 
@@ -115,9 +115,12 @@ const.py              # API 凭证配置（不要提交到 git）
 - [x] Tushare 全字段对接 + 自计算引擎
 - [x] 静态面板数据 (panel) Tushare 支持
 - [ ] jqdata 适配器
-- [ ] akshare 适配器
+- [x] akshare 适配器
 - [ ] Agent-readable 版本 — 将转债数据库封装为 AI Agent 可调用的 Skill
 
 ## License
 
 MIT
+
+## Stars
+如果有用，求个 Star 呗～
