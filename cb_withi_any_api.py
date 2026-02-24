@@ -21,6 +21,12 @@ if const.jqdata_username and const.jqdata_password:
     jq.auth(const.jqdata_username, const.jqdata_password)
     list_available_apis.append('jqdata')
 
+try:
+    import akshare
+    list_available_apis.append('akshare')
+except Exception:
+    pass
+
 
 class cb_data(object):
     
@@ -116,6 +122,18 @@ class cb_data(object):
             self.DB["Outstanding"] = self.Outstanding.reindex_like(self.Amt).fillna(method="pad")
             for k, v in self.DB.items():
                 self.DB[k] = v.reindex_like(self.Amt)
+        elif method == 'akshare':
+            import akshare_reader
+
+            for k, v in self.dfParams.iterrows():
+                df = self.DB[k]
+                df = akshare_reader.update_from_df_akshare(df, end, v["Wind"])
+                self.DB[k] = df
+                print(f'{k} 从 akshare 更新已完成')
+
+            self.DB["Outstanding"] = self.Outstanding.reindex_like(self.Amt).fillna(method="pad")
+            for k, v in self.DB.items():
+                self.DB[k] = v.reindex_like(self.Amt)
         elif method == 'jqdata':
             # jqdata 的实现（占位符）
             print("jqdata 更新功能暂未完全实现")
@@ -169,6 +187,9 @@ class cb_data(object):
         elif method == 'tushare':
             import tushare_reader
             return tushare_reader.fetch_panel_from_tushare(codes)
+        elif method == 'akshare':
+            import akshare_reader
+            return akshare_reader.fetch_panel_from_akshare(codes)
         else:
             raise ValueError(f"不支持的 API 类型: {method}")
     
