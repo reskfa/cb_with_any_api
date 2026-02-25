@@ -4,7 +4,7 @@ A股可转债统一数据接口。对接多种数据源，输出统一的 Pandas
 
 Unified data interface for A-share convertible bonds (可转债). Supports Wind, Tushare, akshare — outputs consistent Pandas DataFrames with auto-computed YTM, implied volatility, Greeks.
 
-## 为什么需要这个项目
+## 这个项目是干嘛的？—— 不要配数据库了。
 
 A股可转债研究者面临一个现实问题：**数据源要么贵，要么乱的满地都是，互相还不通用**。各家 API 的字段名、单位、返回格式都不一样，还没开始做研究，配个数据库半条命就搭进去了。那么万一你有幸换一个数据源，重写的感觉跟好容易碰巧过了 boss 却没保存一样令人心旷神怡...
 
@@ -20,6 +20,9 @@ A股可转债研究者面临一个现实问题：**数据源要么贵，要么�
 | **Tushare** | ✅ 完成 | 需要 pro api，自行申请，性价比高，本项目将自行计算ts没有的字段，如 ytm、隐波 |
 | **akshare** | ✅ 完成 | 免费开源数据源 |
 | **jqdata** | 🚧 本月 | 聚宽数据 |
+
+## data文件夹
+里面有经验证的历史数据，可以做示例，也可以**直接用**。
 
 ## 核心数据结构
 
