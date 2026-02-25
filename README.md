@@ -22,11 +22,11 @@ A股可转债研究者面临一个现实问题：**数据源要么贵，要么�
 ## 核心数据结构
 
 ```python
-from cb_withi_any_api import cb_data
+from cb_with_any_api import cb_data
 
 obj = cb_data()
 obj.loadData("data/newt")         # 加载历史数据
-obj.update("2026-02-13", method="tushare")  # 增量更新
+obj.update("2026-02-13", method="tushare")  # 增量更新，wind|tushare|akshare 均可
 
 # obj.DB — 字典，每个 key 是一个 DataFrame (index=日期, columns=券代码)
 obj.DB['Close']       # 收盘价
