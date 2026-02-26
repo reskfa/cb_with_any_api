@@ -1,8 +1,9 @@
 # CB with Any API
 
 A股可转债统一数据接口。对接多种数据源，输出统一的 Pandas DataFrame 格式，用于可转债的统计分析、量化研究和策略开发。
+我们也提供了开源数据的历史实例，用户更新即可。
 
-Unified data interface for A-share convertible bonds (可转债). Supports Wind, Tushare, akshare — outputs consistent Pandas DataFrames with auto-computed YTM, implied volatility, Greeks.
+Unified data interface for A-share convertible bonds (可转债). Supports Wind, Tushare, akshare — outputs consistent Pandas DataFrames with auto-computed YTM, implied volatility, Greeks.We also have history data from opensource, users can just get start from update.
 
 ## 这个项目是干嘛的？—— 不要配数据库了。
 
