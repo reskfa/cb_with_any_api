@@ -135,12 +135,16 @@ class cb_data(object):
             for k, v in self.DB.items():
                 self.DB[k] = v.reindex_like(self.Amt)
         elif method == 'jqdata':
-            # jqdata 的实现（占位符）
-            print("jqdata 更新功能暂未完全实现")
-            # 这里可以添加 jqdata 的具体实现
+            import jqdata_reader
             for k, v in self.dfParams.iterrows():
-                # 占位实现，实际需要根据 jqdata API 来实现
-                print(f'{k} 从 jqdata 更新（暂未实现）')
+                df = self.DB[k]
+                df = jqdata_reader.update_from_df_jqdata(df, end, v["Wind"])
+                self.DB[k] = df
+                print(f'{k} 从 jqdata 更新已完成')
+
+            self.DB["Outstanding"] = self.Outstanding.reindex_like(self.Amt).fillna(method="pad")
+            for k, v in self.DB.items():
+                self.DB[k] = v.reindex_like(self.Amt)
         else:
             raise ValueError(f"不支持的 API 类型: {method}")
     def insertNewKey(self, new_codes, method=None):
@@ -161,12 +165,23 @@ class cb_data(object):
                 if method == "wind":
                     # 使用 wind_reader.fetch_wind 获取数据
                     df = wind_reader.fetch_wind(diff, field, start, end)
-                    
-                    # 确保 df 不为 None
-                    if df is not None:
-                        # 将新数据与现有数据合并
-                        value = value.join(df)
-                        self.DB[key] = value
+                elif method == "tushare":
+                    import tushare_reader
+                    df = tushare_reader.fetch_tushare(diff, field, start, end)
+                elif method == "akshare":
+                    import akshare_reader
+                    df = akshare_reader.fetch_akshare(diff, field, start, end)
+                elif method == "jqdata":
+                    import jqdata_reader
+                    df = jqdata_reader.fetch_jqdata(diff, field, start, end)
+                else:
+                    df = None
+
+                # 确保 df 不为 None
+                if df is not None:
+                    # 将新数据与现有数据合并
+                    value = value.join(df)
+                    self.DB[key] = value
                         
         self.updatePanelData(new_codes)
     
@@ -190,6 +205,9 @@ class cb_data(object):
         elif method == 'akshare':
             import akshare_reader
             return akshare_reader.fetch_panel_from_akshare(codes)
+        elif method == 'jqdata':
+            import jqdata_reader
+            return jqdata_reader.fetch_panel_from_jqdata(codes)
         else:
             raise ValueError(f"不支持的 API 类型: {method}")
     
