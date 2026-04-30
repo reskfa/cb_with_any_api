@@ -1,5 +1,6 @@
 import pandas as pd
 import const
+import numpy as np
 
 list_available_apis = []
 
@@ -9,6 +10,10 @@ if const.wind_available:
         list_available_apis.append('wind')
     except:
         print('Wind API 未正确安装')
+
+
+if const.ifind_refresh_token:
+    list_available_apis.append('ifind')
 
 if const.ts_token:
     import tushare as ts
@@ -26,6 +31,7 @@ try:
     list_available_apis.append('akshare')
 except Exception:
     pass
+
 
 
 class cb_data(object):
@@ -51,7 +57,7 @@ class cb_data(object):
         self.dfParams = pd.read_excel("参数.xlsx", index_col=0)
         for k, v in self.dfParams.iterrows():
             if self.file_type == "pkl":
-                df = pd.read_pickle(prefix + k + "." + self.file_type, index_col=0)
+                df = pd.read_pickle(prefix + k + "." + self.file_type)
             elif self.file_type == "csv":
                 df = pd.read_csv(prefix + k + "." + self.file_type, index_col=0)
             elif self.file_type == "xlsx":  
@@ -145,6 +151,17 @@ class cb_data(object):
             self.DB["Outstanding"] = self.Outstanding.reindex_like(self.Amt).fillna(method="pad")
             for k, v in self.DB.items():
                 self.DB[k] = v.reindex_like(self.Amt)
+        elif method == 'ifind':
+            import ifind_reader
+            for k, v in self.dfParams.iterrows():
+                df = self.DB[k]
+                df = ifind_reader.update_from_df_ifind(df, end, v["Wind"])
+                self.DB[k] = df
+                print(f'{k} 从 ifind 更新已完成')
+
+            self.DB["Outstanding"] = self.Outstanding.reindex_like(self.Amt).fillna(method="pad")
+            for k, v in self.DB.items():
+                self.DB[k] = v.reindex_like(self.Amt)
         else:
             raise ValueError(f"不支持的 API 类型: {method}")
     def insertNewKey(self, new_codes, method=None):
@@ -174,6 +191,9 @@ class cb_data(object):
                 elif method == "jqdata":
                     import jqdata_reader
                     df = jqdata_reader.fetch_jqdata(diff, field, start, end)
+                elif method == "ifind":
+                    import ifind_reader
+                    df = ifind_reader.fetch_ifind(diff, field, start, end)
                 else:
                     df = None
 
@@ -208,6 +228,9 @@ class cb_data(object):
         elif method == 'jqdata':
             import jqdata_reader
             return jqdata_reader.fetch_panel_from_jqdata(codes)
+        elif method == 'ifind':
+            import ifind_reader
+            return ifind_reader.fetch_panel_from_ifind(codes)
         else:
             raise ValueError(f"不支持的 API 类型: {method}")
     
