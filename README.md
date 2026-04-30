@@ -3,7 +3,7 @@
 A股可转债统一数据接口。对接多种数据源，输出统一的 Pandas DataFrame 格式，用于可转债的统计分析、量化研究和策略开发。
 我们也提供了开源数据的历史实例，用户更新即可。
 
-Unified data interface for A-share convertible bonds (可转债). Supports Wind, Tushare, akshare — outputs consistent Pandas DataFrames with auto-computed YTM, implied volatility, Greeks.We also have history data from opensource, users can just get start from update.
+Unified data interface for A-share convertible bonds (可转债). Supports Wind, Tushare, akshare, JQData and iFind — outputs consistent Pandas DataFrames with auto-computed YTM, implied volatility, Greeks.We also have history data from opensource, users can just get start from update.
 
 ## 这个项目是干嘛的？—— 不要配数据库了。
 
@@ -11,7 +11,7 @@ A股可转债研究者面临一个现实问题：**数据源要么贵，要么�
 
 本项目将各数据源的差异封装在 reader 层，上层分析代码只需要面对统一的 `cb_data` 对象。
 
-你，用户，本项目的大爷（二声，表尊敬的那种），直接得到 DataFrame，直接开始你的研究。
+你，用户，直接得到 DataFrame，直接开始你的研究。
 
 ## 数据源支持
 
@@ -21,7 +21,7 @@ A股可转债研究者面临一个现实问题：**数据源要么贵，要么�
 | **Tushare** | ✅ 完成 | 需要 pro api，自行申请，性价比高，本项目将自行计算ts没有的字段，如 ytm、隐波 |
 | **akshare** | ✅ 完成 | 免费开源数据源 |
 | **jqdata** | ✅ 完成 | 聚宽数据 |
-| **ifind** | Planing | 同花顺 iFind |
+| **ifind** | ✅ 完成| 同花顺 iFind |
 
 ## data文件夹
 里面有经验证的历史数据，可以做示例，也可以**直接用**。
@@ -63,8 +63,8 @@ obj.matNormal         # 过滤异常券后的有效矩阵
 **1. 安装依赖**
 
 ```bash
-pip install pandas numpy scipy tushare akshare
-# 可选: WindPy (需 Wind 终端), jqdatasdk
+pip install pandas numpy scipy akshare
+# 可选: WindPy (需 Wind 终端), jqdatasdk, ifind, tushare
 ```
 
 **2. 配置 API 凭证**
@@ -76,6 +76,7 @@ wind_available = False            # 没有 Wind 设为 False
 ts_token = 'your_tushare_token'
 jqdata_username = ''
 jqdata_password = ''
+ifind_refresh_token = '' # 去超级命令工具找（https://quantapi.10jqka.com.cn/gwstatic/static/ds_web/super-command-web/index.html）
 ```
 
 **3. 使用**
@@ -83,12 +84,15 @@ jqdata_password = ''
 ```python
 from cb_with_any_api import cb_data
 
-obj = cb_data(file_type="csv")
-obj.loadData("data/newt")
-obj.update("2026-02-13", method="tushare")
+obj = cb_data(file_type="pkl")
+obj.loadData("data/")
+obj.update("2026-03-04", method="tushare")
+
+codes = obj.codes_active
+date = obj.date
 
 # 当日活跃券的转股溢价率
-prem = obj.ConvPrem.loc[obj.date, obj.codes_active]
+prem = obj.ConvPrem.loc[date, codes]
 print(prem.describe())
 ```
 
@@ -96,26 +100,25 @@ print(prem.describe())
 
 ```
 cb_with_any_api.py   # 核心类 cb_data，统一接口层
-wind_reader.py        # Wind 数据适配器
-tushare_reader.py     # Tushare 数据适配器（含 YTM/Ptm/ImpliedVol 计算引擎）
+*_reader.py        # 各类数据源的适配器
 greeks.py             # 希腊字母计算（Delta/Gamma/Theta/Vega，考虑退市风险）
 const.py              # API 凭证配置（不要提交到 git）
 参数.xlsx              # 字段映射表（Wind/Tushare/同花顺 字段对照）
 ```
 
-### Tushare 字段对接细节
+## 关于需要算的指标
 
-直接从 `cb_daily` 获取的：Amt, Close, ConvV, ConvPrem, Strb, StrbPrem
+- **YTM** — Tushare 版从 `cb_rate` (票息) + `cb_basic` (赎回价) 构建现金流日历，Newton 法求解，结果缓存至 `cb_cashflow_calendar.pkl`
+- **Ptm** — Tushare从 `cb_basic.maturity_date` 计算，全量缓存至内存
+- **ImpliedVol** — 除 Wind 以外都是自己算，BS 定价模型 + 二分法反推，跨日期x跨券全矢量化
 
-自行计算的：
-- **YTM** — 从 `cb_rate` (票息) + `cb_basic` (赎回价) 构建现金流日历，Newton 法求解，结果缓存至 `cb_cashflow_calendar.pkl`
-- **Ptm** — 从 `cb_basic.maturity_date` 计算，全量缓存至内存
-- **ImpliedVol** — BS 定价模型 + 二分法反推，跨日期x跨券全矢量化
-- **Outstanding** — 从 `cb_share.remain_size` 获取变动记录，ffill 到交易日
+## 关于支持数据源的说明
 
-已知的数据源差异（详见 `test_0224.md`）：
-- Tushare `close` 为全价，Wind 为净价，差异 = 应计利息
-- `Ptm` 对已公告强赎的券使用原始到期日（Wind 用强赎日）
+wind 量化 API（就因为它太贵我才开发的这个...）
+jqdata 未尝试免费版
+tushare 用 500 积分版进行的测试
+ifind 使用的是 http 版，主要考虑兼容 macOS 用户，以及免去安装，但你需要用命令工具，找到你的 refresh token，复制进 const.py
+
 
 ## Roadmap
 
@@ -124,6 +127,7 @@ const.py              # API 凭证配置（不要提交到 git）
 - [x] 静态面板数据 (panel) Tushare 支持
 - [x] jqdata 适配器
 - [x] akshare 适配器
+- [x] ifind 适配器
 - [ ] Agent-readable 版本 — 将转债数据库封装为 AI Agent 可调用的 Skill
 
 ## License
